@@ -55,7 +55,7 @@ def catch_frame(addr):
         if frame["proto"] == 8:
             ipv4 = ipv4_parser(frame["data"])
             if ipv4["dst"] == addr:
-                return print(f"{addr} catched on {iface[0]}") 
+                return print(f"Pocket with dst addr {addr} catched on {iface[0]}") 
 
 def generate(addr, method):
     if method == "icmp":
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     catcher.start()
     try:
         generate(args.addr, args.method)
-        sleep(5)
+        sleep(3)
     except NotImplementedError:
         active = False
         print("Not Implemented")
