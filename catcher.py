@@ -59,7 +59,7 @@ def catch_frame(addr):
 
 def generate(addr, method):
     if method == "icmp":
-        subprocess.call(f"ping -c 1 {addr} > null", shell=True)
+        subprocess.call(f"ping -c 1 {addr} > /dev/null", shell=True)
     else:
         raise NotImplementedError
 
