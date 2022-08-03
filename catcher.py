@@ -5,6 +5,7 @@ import threading
 import argparse
 from ipaddress import ip_address
 from time import sleep
+import sys
 
 active = True
 
@@ -71,6 +72,7 @@ if __name__ == "__main__":
         ip_address(args.addr)
     except ValueError:
         print("Input correct ip-address!")
+        sys.exit(1)
     catcher = threading.Thread(target=catch_frame, args=(args.addr,))
     catcher.start()
     try:
