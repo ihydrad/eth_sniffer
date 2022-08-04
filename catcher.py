@@ -75,12 +75,12 @@ def catch_frame(addr):
         if iface[0] == 'lo':
             continue
         frame = ethernet_parser(raw_data)  
-        proto = int(frame["proto"])
+        proto = frame["proto"]
         if proto == ETH_P_ARP:
             src_ip, dst_ip = arp_parser(frame["data"])
             if dst_ip == addr:
                 return print(f'{src_ip} -> {dst_ip} [{proto_typ[proto]}]        {iface[0]}')      
-        if frame["proto"] == ETH_P_IP:
+        if proto == ETH_P_IP:
             ipv4 = ipv4_parser(frame["data"])
             if ipv4["dst"] == addr:
                 return print(f'{ipv4["src"]} -> {ipv4["dst"]} [{proto_typ[proto]}]        {iface[0]}') 
