@@ -95,7 +95,7 @@ if __name__ == "__main__":
     #test()
     parser = argparse.ArgumentParser()
     parser.add_argument("addr", help="destination")
-    parser.add_argument("-m", dest="method", help="destination", default="icmp")
+    parser.add_argument("-m", dest="method", help="icmp", default="icmp")
     args = parser.parse_args()
     try:
         ip_address(args.addr)
