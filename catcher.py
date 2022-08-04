@@ -12,8 +12,8 @@ ETH_P_IP = 0x800
 ETH_P_ARP = 0x806
 active = True
 proto_type = {
-    ETH_P_IP: "IP proto",
-    ETH_P_ARP: "ARP proto" 
+    ETH_P_IP: "IPv4",
+    ETH_P_ARP: "ARP" 
 }
 
 
@@ -28,6 +28,7 @@ def ethernet_parser(raw_data):
     eth_frame["src"] = src.hex()
     eth_frame["proto"] = prototype #socket.htons(prototype)
     eth_frame["data"] = raw_data[14:]
+    #eth_frame["crc"] = raw_data[-4]
     return eth_frame
 
 def ipv4_parser(raw_data):
@@ -51,24 +52,47 @@ def arp_parser(raw_data):
     byte_end = header_len + 2*hw_len + 2*p_len
     src_ip, dst_ip = struct.unpack(f"! 6x 4s 6x 4s", raw_data[8:byte_end])
     return get_ip(src_ip), get_ip(dst_ip)
-            
+
+def test():
+    s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(ETH_P_ALL))
+    while True:
+        raw_data, iface = s.recvfrom(65535)
+        if iface[0] == 'lo':
+            continue
+        frame = ethernet_parser(raw_data)
+        print(hex(frame["crc"]))
+
 def catch_frame(addr):
     s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(ETH_P_ALL))
+    result = ''
+    dump = ''
     while active:
         raw_data, iface = s.recvfrom(65535)
         if iface[0] == 'lo':
             continue
         frame = ethernet_parser(raw_data)  
         proto = frame["proto"]
+
         if proto == ETH_P_ARP:
             src_ip, dst_ip = arp_parser(frame["data"])
             if dst_ip == addr:
-                return print(f'{src_ip} -> {dst_ip} [{proto_type[proto]}]        {iface[0]}')      
+                result += f'{src_ip} -> {dst_ip} [{proto_type[proto]}]        {iface[0]}\n'
+        
         if proto == ETH_P_IP:
             ipv4 = ipv4_parser(frame["data"])
             if ipv4["dst"] == addr:
-                return print(f'{ipv4["src"]} -> {ipv4["dst"]} [{proto_type[proto]}]        {iface[0]}') 
-        
+                # если есть ip-пакет, то АРП запросы не сохраняем
+                result = f'{ipv4["src"]} -> {ipv4["dst"]} [{proto_type[proto]}]        {iface[0]}\n'
+                break
+            dump += f'{ipv4["src"]} -> {ipv4["dst"]} [{proto_type[proto]}]        {iface[0]}\n'
+
+    if result:
+        print(result)
+    else:
+        inp = input("Not found! Print dump?N/y")
+        if inp.lower() == "y":
+            print(dump)    
+
 def generate(addr, method):
     if method == "icmp":
         subprocess.call(f"ping -c 1 {addr} > /dev/null", shell=True)
@@ -76,6 +100,7 @@ def generate(addr, method):
         raise NotImplementedError
 
 if __name__ == "__main__":
+    #test()
     parser = argparse.ArgumentParser()
     parser.add_argument("addr", help="destination ip")
     parser.add_argument("-m", dest="method", help="icmp", default="icmp")
@@ -91,6 +116,5 @@ if __name__ == "__main__":
         generate(args.addr, args.method)
         sleep(3)
     except NotImplementedError:
-        active = False
         print("Not Implemented")
-    
+    active = False
