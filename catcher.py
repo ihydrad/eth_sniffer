@@ -11,7 +11,7 @@ ETH_P_ALL = 3
 ETH_P_IP = 0x800
 ETH_P_ARP = 0x806
 active = True
-proto_typ = {
+proto_type = {
     ETH_P_IP: "IP proto",
     ETH_P_ARP: "ARP proto" 
 }
@@ -51,22 +51,6 @@ def arp_parser(raw_data):
     byte_end = header_len + 2*hw_len + 2*p_len
     src_ip, dst_ip = struct.unpack(f"! 6x 4s 6x 4s", raw_data[8:byte_end])
     return get_ip(src_ip), get_ip(dst_ip)
-
-def test():
-    s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3))
-    while True:
-        raw_data, addr = s.recvfrom(65535)
-        if addr[0] == 'lo':
-            continue
-        frame = ethernet_parser(raw_data)
-        proto = int(frame["proto"])
-        if proto == ETH_P_ARP:
-            print(f'{frame["src"]} -> {frame["dst"]} [{proto_typ[proto]}]        {addr[0]}')
-            arp_parser(frame["data"])
-        # if frame["proto"] == 8:
-        #     ipv4 = ipv4_parser(frame["data"])
-        #     print(f'{ipv4["src"]} -> {ipv4["dst"]} [{ipv4["proto"]}]')
-        #     #print(f'Version:{ipv4["version"]}, Header Length:{ipv4["header_length"]}, TTL:{ipv4["ttl"]}\n')
             
 def catch_frame(addr):
     s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(ETH_P_ALL))
@@ -79,11 +63,11 @@ def catch_frame(addr):
         if proto == ETH_P_ARP:
             src_ip, dst_ip = arp_parser(frame["data"])
             if dst_ip == addr:
-                return print(f'{src_ip} -> {dst_ip} [{proto_typ[proto]}]        {iface[0]}')      
+                return print(f'{src_ip} -> {dst_ip} [{proto_type[proto]}]        {iface[0]}')      
         if proto == ETH_P_IP:
             ipv4 = ipv4_parser(frame["data"])
             if ipv4["dst"] == addr:
-                return print(f'{ipv4["src"]} -> {ipv4["dst"]} [{proto_typ[proto]}]        {iface[0]}') 
+                return print(f'{ipv4["src"]} -> {ipv4["dst"]} [{proto_type[proto]}]        {iface[0]}') 
         
 def generate(addr, method):
     if method == "icmp":
@@ -92,7 +76,6 @@ def generate(addr, method):
         raise NotImplementedError
 
 if __name__ == "__main__":
-    #test()
     parser = argparse.ArgumentParser()
     parser.add_argument("addr", help="destination ip")
     parser.add_argument("-m", dest="method", help="icmp", default="icmp")
