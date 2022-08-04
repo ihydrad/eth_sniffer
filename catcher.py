@@ -94,7 +94,7 @@ def generate(addr, method):
 if __name__ == "__main__":
     #test()
     parser = argparse.ArgumentParser()
-    parser.add_argument("addr", help="destination")
+    parser.add_argument("addr", help="destination ip")
     parser.add_argument("-m", dest="method", help="icmp", default="icmp")
     args = parser.parse_args()
     try:
