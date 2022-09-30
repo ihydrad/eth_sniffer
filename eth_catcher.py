@@ -75,27 +75,38 @@ def catch_frame(addr):
 
         if proto == ETH_P_ARP:
             src_ip, dst_ip = arp_parser(frame["data"])
+            data = f'[Recorded on {iface[0]}][{proto_type[proto]}] {src_ip} -> {dst_ip}\n'
+            dump += data
             if dst_ip == addr:
-                result += f'{src_ip} -> {dst_ip} [{proto_type[proto]}]        {iface[0]}\n'
+                result += data
         
         if proto == ETH_P_IP:
             ipv4 = ipv4_parser(frame["data"])
             if ipv4["dst"] == addr:
                 # если есть ip-пакет, то АРП запросы не сохраняем
-                result = f'{ipv4["src"]} -> {ipv4["dst"]} [{proto_type[proto]}]        {iface[0]}\n'
+                result = f'[Recorded on {iface[0]}][{proto_type[proto]}] {ipv4["src"]} -> {ipv4["dst"]}'
                 break
-            dump += f'{ipv4["src"]} -> {ipv4["dst"]} [{proto_type[proto]}]        {iface[0]}\n'
 
     if result:
         print(result)
     else:
-        inp = input("Not found! Print dump?N/y")
+        inp = input("Not found, target interface is DOWN?\nPrint dump?N/y\n")
         if inp.lower() == "y":
-            print(dump)    
+            filter = input("Input filter string or skip this for see all dump:\n")            
+            if filter:
+                print("searching: " + filter)
+                for line in dump.split('\n'):
+                    if filter in line:
+                        print(line)
+            else:                
+                print(dump)
 
 def generate(addr, method):
     if method == "icmp":
         subprocess.call(f"ping -c 1 {addr} > /dev/null", shell=True)
+    elif method == "tcp":
+        cmd = f'"000" > /dev/tcp/{addr}/80 > /dev/null'
+        subprocess.call(cmd, shell=True, executable='/bin/bash', stderr=subprocess.PIPE)
     else:
         raise NotImplementedError
 
@@ -103,7 +114,7 @@ if __name__ == "__main__":
     #test()
     parser = argparse.ArgumentParser()
     parser.add_argument("addr", help="destination ip")
-    parser.add_argument("-m", dest="method", help="icmp", default="icmp")
+    parser.add_argument("-m", dest="method", help="доступные методы проверки (реализовано: icmp)", default="icmp")
     args = parser.parse_args()
     try:
         ip_address(args.addr)
